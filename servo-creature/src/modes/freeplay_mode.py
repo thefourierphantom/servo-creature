@@ -1,12 +1,5 @@
 """
-modes/freeplay_mode.py — EASY MODE for NSBE Radar Chaser
-
-ENTER from attract enters this mode.
-This is a beginner-friendly scored mode:
-- slower prompts
-- 5 seconds per prompt
-- no shake prompts
-- simple summary, then return to attract
+modes/freeplay_mode.py — TESTING GROUND for NSBE Radar Chaser.
 """
 
 import random
@@ -14,7 +7,7 @@ import time
 from src.core.game_state import GameMode
 from src.util.logger import get_logger
 
-logger = get_logger("easy_mode")
+logger = get_logger("testing_ground")
 
 _S_SHOWING = "SHOWING"
 _S_RESULT = "RESULT"
@@ -31,6 +24,7 @@ class FreeplayMode:
         self._count = int(self._gcfg.get("prompt_count", 8))
         self._hold = float(game_cfg.get("ui", {}).get("result_hold_sec", 0.55))
         self._sum_t = 5.0
+        self._recenter_window = float(self._gcfg.get("recenter_window_sec", 2.8))
 
         self._state = _S_SHOWING
         self._prompt_start = 0.0
@@ -57,12 +51,14 @@ class FreeplayMode:
         self._state = _S_SHOWING
         self._state_timer = 0.0
         self._next_prompt()
-        logger.info("Easy mode session n=%d dur=%.1fs", self._count, self._dur)
+        logger.info("Testing Ground session n=%d dur=%.1fs", self._count, self._dur)
 
     def exit(self) -> None:
         self.gs.prompt = ""
         self.gs.status_message = ""
         self.gs.session_active = False
+        self.gs.awaiting_recenter = False
+        self.gs.recenter_timer = 0.0
 
     def update(self, dt: float, tilt: dict, actions: list) -> GameMode | None:
         self.gs.timer += dt
@@ -76,14 +72,31 @@ class FreeplayMode:
                 return GameMode.BOSS
 
         if self._state == _S_SHOWING:
-            return self._do_showing(tilt)
+            return self._do_showing(dt, tilt)
         if self._state == _S_RESULT:
             return self._do_result(dt)
         if self._state == _S_SUMMARY:
             return self._do_summary(dt, actions)
         return None
 
-    def _do_showing(self, tilt: dict) -> GameMode | None:
+    def _do_showing(self, dt: float, tilt: dict) -> GameMode | None:
+        if self.gs.awaiting_recenter:
+            remain = max(0.0, self.gs.recenter_timer)
+            self.gs.status_message = f"RECENTER TO ARM PROMPT ({remain:.1f}s)"
+            self.gs.prompt_timer = self._dur
+            if self._se.is_centered(tilt):
+                self.gs.awaiting_recenter = False
+                self.gs.recenter_timer = 0.0
+                self.gs.status_message = ""
+                self._prompt_start = time.monotonic()
+            else:
+                self.gs.recenter_timer = max(0.0, self.gs.recenter_timer - dt)
+                if self.gs.recenter_timer <= 0:
+                    self._se.register_recenter_timeout()
+                    self._state = _S_RESULT
+                    self._state_timer = self._hold
+                return None
+
         elapsed = time.monotonic() - self._prompt_start
         remaining = max(0.0, self._dur - elapsed)
         self.gs.prompt_timer = remaining
@@ -125,6 +138,8 @@ class FreeplayMode:
         self.gs.last_prompt_result = ""
         self.gs.axis_inverted = False
         self.gs.is_fake_out = False
+        self.gs.awaiting_recenter = self._prompt_idx > 0
+        self.gs.recenter_timer = self._recenter_window if self.gs.awaiting_recenter else 0.0
         self._prompt_start = time.monotonic()
         self.gs.prompt_timer = self._dur
         self.gs.prompt_index = self._prompt_idx + 1
@@ -134,12 +149,14 @@ class FreeplayMode:
         self._state_timer = self._sum_t
         self.gs.prompt = ""
         self.gs.session_active = False
+        self.gs.awaiting_recenter = False
+        self.gs.recenter_timer = 0.0
         self.gs.status_message = (
-            f"EASY MODE DONE!  {self.gs.score:,} pts  "
+            f"TESTING GROUND DONE!  {self.gs.score:,} pts  "
             f"{self.gs.accuracy:.0f}% acc  "
             f"best combo ×{self.gs.max_combo}"
         )
         logger.info(
-            "Easy mode done score=%d acc=%.1f%% combo=%d",
+            "Testing Ground done score=%d acc=%.1f%% combo=%d",
             self.gs.score, self.gs.accuracy, self.gs.max_combo
         )
