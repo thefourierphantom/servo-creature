@@ -309,37 +309,21 @@ class DashboardDisplay:
         cx = self._W // 2
         cy = self._H // 2
 
-        # Space-glow ambience (hero style)
-        for r, alpha in ((380, 18), (300, 28), (220, 38)):
-            halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
-            pygame.draw.circle(halo, (55, 120, 255, alpha), (r, r), r)
-            self._screen.blit(halo, (120 - r, cy - r + 20))
-        for sx, sy in ((180, 120), (350, 280), (900, 120), (1060, 520), (760, 600)):
-            pygame.draw.line(self._screen, (210, 220, 255), (sx - 12, sy), (sx + 12, sy), 1)
-            pygame.draw.line(self._screen, (210, 220, 255), (sx, sy - 12), (sx, sy + 12), 1)
+        pulse = int(200 + 55 * math.sin(self._t * 1.8))
 
-        # Left hero orb / bot stand-in
-        pygame.draw.circle(self._screen, (80, 165, 255), (220, cy + 40), 170)
-        pygame.draw.circle(self._screen, (215, 235, 255), (220, cy + 40), 170, 4)
-        pygame.draw.circle(self._screen, (30, 70, 150), (220, cy + 40), 120)
-        pygame.draw.circle(self._screen, (120, 210, 255), (165, cy - 10), 26)
-        pygame.draw.circle(self._screen, C_WHITE, (165, cy - 10), 26, 2)
+        # Big title
+        t1 = self._f_prompt.render("NSBE", True, C_GOLD)
+        t2 = self._f_prompt.render("RADAR CHASER", True, C_WHITE)
+        self._screen.blit(t1, (cx - t1.get_width() // 2, cy - 200))
+        self._screen.blit(t2, (cx - t2.get_width() // 2, cy - 90))
 
-        # Main title block (right aligned, poster-style)
-        t0 = self._f_md.render("nsbe-radar.local // mission feed", True, C_BLUE)
-        t1 = self._f_prompt.render("FUTURE", True, C_WHITE)
-        t2 = self._f_prompt.render("TILT TECH", True, C_WHITE)
-        self._screen.blit(t0, (cx + 130, cy - 250))
-        self._screen.blit(t1, (cx + 120, cy - 170))
-        self._screen.blit(t2, (cx + 120, cy - 60))
-
-        sub = self._f_md.render("Lock in. Read motion. Own the arena.", True, C_GREY)
-        self._screen.blit(sub, (cx + 120, cy + 40))
+        sub = self._f_md.render("Lock in. Read the motion. Chase the score.", True, C_GREY)
+        self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
 
         # Blinking start prompt
         if int(self._t * 2) % 2 == 0:
-            start = self._f_lg.render("► ENTER: TESTING GROUND ◄", True, C_ORANGE)
-            self._screen.blit(start, (cx + 120, cy + 100))
+            start = self._f_lg.render("► Press ENTER for TESTING GROUND ◄", True, C_ORANGE)
+            self._screen.blit(start, (cx - start.get_width() // 2, cy + 88))
 
         # Mode shortcuts
         shortcuts = [
