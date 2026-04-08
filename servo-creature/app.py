@@ -8,8 +8,7 @@ No other hardware is required.
 Keyboard:
   ENTER / Space → Testing Ground / confirm
   ESC           → Back to attract
-  F2            → Reflex mode
-  F3            → Boss mode
+  F2            → Reflex (Endless) mode
   R             → Recalibrate MPU6050
   D             → Toggle debug overlay
   Arrow keys    → Simulate tilt (mock mode)
@@ -45,7 +44,6 @@ from src.output.dashboard_display import DashboardDisplay
 from src.modes.attract_mode      import AttractMode
 from src.modes.freeplay_mode     import FreeplayMode
 from src.modes.reflex_mode       import ReflexMode
-from src.modes.boss_mode         import BossMode
 from src.modes.calibration_mode  import CalibrationMode
 
 
@@ -134,7 +132,6 @@ def main() -> None:
         GameMode.ATTRACT:     AttractMode(gs, game_cfg, prompt_cfg),
         GameMode.FREEPLAY:    FreeplayMode(gs, game_cfg, prompt_cfg, score_engine),
         GameMode.REFLEX:      ReflexMode(gs, game_cfg, prompt_cfg, score_engine),
-        GameMode.BOSS:        BossMode(gs, game_cfg, prompt_cfg, score_engine),
         GameMode.CALIBRATING: cal_mode,
     }
 

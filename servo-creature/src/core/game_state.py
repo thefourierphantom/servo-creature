@@ -1,12 +1,6 @@
 """
 core/game_state.py — Tilt Trial Arena / Mission Breach
 Single source of truth for all runtime state.
-
-Key additions vs v1:
-  raw_tilt     — offset-corrected angles before axis mapping (for debug overlay)
-  debug_mode   — toggle debug overlay (D key)
-  score_delta  — last point change shown as "+N" popup
-  prompt_index / prompt_total — progress through current session
 """
 
 from enum import Enum, auto
@@ -19,7 +13,6 @@ class GameMode(Enum):
     ATTRACT     = auto()
     FREEPLAY    = auto()
     REFLEX      = auto()
-    BOSS        = auto()
     PAUSED      = auto()
     CALIBRATING = auto()
 
@@ -37,36 +30,36 @@ class GameState:
         self.hits:         int   = 0
         self.misses:       int   = 0
         self.session_active: bool = False
-        self.prompt_index: int   = 0   # 1-based, for HUD "Prompt N / M"
-        self.prompt_total: int   = 0
+        self.prompt_index: int   = 0   # prompts survived this session
+        self.prompt_total: int   = 0   # 0 = endless mode
 
         # ── Timing ────────────────────────────────────────────────────────
-        self.timer:             float = 0.0   # session elapsed time
-        self.prompt_timer:      float = 0.0   # seconds remaining for current prompt
+        self.timer:             float = 0.0
+        self.prompt_timer:      float = 0.0
         self.idle_timer:        float = 0.0
 
         # ── Sensor data ───────────────────────────────────────────────────
-        # tilt: fully mapped game axes (what scoring sees)
         self.tilt: dict = {"roll": 0.0, "pitch": 0.0, "accel_mag": 1.0,
                            "raw_roll": 0.0, "raw_pitch": 0.0}
 
-        # ── HUD / feedback fields ─────────────────────────────────────────
+        # ── HUD / feedback ────────────────────────────────────────────────
         self.prompt:              str   = ""
-        self.last_prompt_result:  str   = ""    # "HIT" | "MISS" | "FAKE" | ""
-        self.result_flash_timer:  float = 0.0   # screen flash countdown
-        self.result_hold_timer:   float = 0.0   # how long HIT/MISS label stays
+        self.last_prompt_result:  str   = ""    # "HIT" | "MISS" | ""
+        self.result_flash_timer:  float = 0.0
+        self.result_hold_timer:   float = 0.0
 
-        self.score_delta:         int   = 0     # last change, shown as "+N"
-        self.score_delta_timer:   float = 0.0   # popup countdown
+        self.score_delta:         int   = 0
+        self.score_delta_timer:   float = 0.0
 
-        self.threat_level: int   = 0   # 0–5
-        self.calibrated:   bool  = False
-        self.status_message: str = ""
+        self.threat_level:   int   = 0   # 0–5
+        self.calibrated:     bool  = False
+        self.status_message: str   = ""
         self.awaiting_recenter: bool = False
         self.recenter_timer:    float = 0.0
 
-        # ── Boss flags ────────────────────────────────────────────────────
-        self.axis_inverted: bool = False
+        # ── Reflex / game flags ───────────────────────────────────────────
+        self.game_over:   bool = False   # True when score-death triggers
+        self.axis_inverted: bool = False  # kept for potential future use
         self.is_fake_out:   bool = False
 
         # ── Dev / debug ───────────────────────────────────────────────────
@@ -117,6 +110,7 @@ class GameState:
         self.is_fake_out       = False
         self.awaiting_recenter = False
         self.recenter_timer    = 0.0
+        self.game_over         = False
         self.session_active    = True
 
     # ── Scoring ───────────────────────────────────────────────────────────────
@@ -145,7 +139,7 @@ class GameState:
         self.combo     = 0
         self.misses   += 1
         self.threat_level = min(5, self.threat_level + 1)
-        self.score     = max(0, self.score - penalty_pts)
+        self.score     = max(0, self.score - penalty_pts)  # floor at 0
         self.last_prompt_result = "MISS"
         self.result_flash_timer = flash_sec
         self.result_hold_timer  = hold_sec
@@ -177,16 +171,10 @@ class GameState:
             "timer":          self.timer,
             "prompt_timer":   self.prompt_timer,
             "prompt_index":   self.prompt_index,
-            "prompt_total":   self.prompt_total,
+            "game_over":      self.game_over,
             "threat_level":   self.threat_level,
             "calibrated":     self.calibrated,
             "tilt":           self.tilt,
             "prompt":         self.prompt,
             "last_result":    self.last_prompt_result,
-            "axis_inverted":  self.axis_inverted,
-            "is_fake_out":    self.is_fake_out,
-            "awaiting_recenter": self.awaiting_recenter,
-            "recenter_timer": self.recenter_timer,
-            "session_active": self.session_active,
-            "debug_mode":     self.debug_mode,
         }

@@ -1,6 +1,6 @@
 """
 core/scoring.py — Tilt Trial Arena / Mission Breach
-Prompt-evaluation logic used by Reflex and Boss modes.
+Prompt-evaluation logic used by Reflex mode.
 
 ScoreEngine is stateless with respect to the session — it reads from
 GameState and delegates writes back to it via gs.register_hit / miss.
@@ -24,7 +24,6 @@ class ScoreEngine:
         self._tilt_cfg  = game_cfg.get("tilt", {})
         self._score_cfg = game_cfg.get("scoring", {})
         self._reflex_cfg= game_cfg.get("reflex", {})
-        self._boss_cfg  = game_cfg.get("boss", {})
 
     # ── Configuration helpers ─────────────────────────────────────────────────
 
@@ -55,8 +54,12 @@ class ScoreEngine:
     def time_bonus_max(self) -> int:
         return int(self._reflex_cfg.get("time_bonus_max_pts", 50))
 
+    @property
+    def miss_penalty(self) -> int:
+        return int(self._reflex_cfg.get("miss_penalty_pts", 80))
+
     def is_centered(self, tilt: dict) -> bool:
-        roll = abs(tilt.get("roll", 0.0))
+        roll  = abs(tilt.get("roll",  0.0))
         pitch = abs(tilt.get("pitch", 0.0))
         return roll <= self.recenter_deadzone and pitch <= self.recenter_deadzone
 
@@ -72,64 +75,48 @@ class ScoreEngine:
         prompt_id: str,
         prompt_start: float,
         prompt_duration: float,
-        axis_inverted: bool = False,
-        is_fake_out: bool   = False,
     ) -> str:
         """
-        Determine whether tilt satisfies (or violates) the current prompt.
+        Determine whether tilt satisfies the current prompt.
 
         Returns one of:
             "HIT"     — correct response within time
             "MISS"    — time expired or clearly wrong direction
-            "FAKE"    — fake-out detected (player moved when they shouldn't)
             "PENDING" — still within window, no conclusion yet
         """
-        elapsed  = time.monotonic() - prompt_start
-        timeout  = elapsed >= prompt_duration
+        elapsed = time.monotonic() - prompt_start
+        timeout = elapsed >= prompt_duration
 
         roll  = tilt.get("roll",  0.0)
         pitch = tilt.get("pitch", 0.0)
         amag  = tilt.get("accel_mag", 1.0)
 
-        if axis_inverted:
-            roll  = -roll
-            pitch = -pitch
-
-        # Determine if the player is clearly tilted in *any* direction
         player_moved = (
             abs(roll)  > self.threshold or
             abs(pitch) > self.threshold or
             amag       > self.shake_threshold
         )
-        pid = prompt_id.lower()
 
-        if is_fake_out:
-            # In a fake-out the player must FREEZE.  Moving is a fail.
-            if player_moved:
-                self._record_fake(prompt_start, prompt_duration)
-                return "FAKE"
-            if timeout:
-                return self._record_hit(prompt_start, prompt_duration)
-            return "PENDING"
+        pid = prompt_id.lower()
 
         # ── Direction prompts ─────────────────────────────────────────────
         hit = False
-        if pid in ("left",):
+        if pid == "left":
             hit = roll <= -self.threshold
-        elif pid in ("right",):
+        elif pid == "right":
             hit = roll >= self.threshold
         elif pid in ("up", "nose_up"):
             hit = pitch <= -self.threshold
         elif pid in ("down", "nose_down"):
             hit = pitch >= self.threshold
-        elif pid in ("full_tilt",):
+        elif pid == "full_tilt":
             hit = abs(roll) >= self.threshold or abs(pitch) >= self.threshold
         elif pid in ("hold", "freeze"):
-            # Must hold still for the full duration.
-            # Ignore accel spikes here to avoid vibration-induced false misses.
-            if abs(roll) > self.deadzone or abs(pitch) > self.deadzone:
-                self._record_miss()
-                return "MISS"
+            # Use angle-only check — ignores accel_mag to avoid sensor
+            # vibration noise causing false misses on a physical wand.
+            player_moved_hold = abs(roll) > self.threshold or abs(pitch) > self.threshold
+            if player_moved_hold:
+                return self._record_miss()
             if timeout:
                 return self._record_hit(prompt_start, prompt_duration)
             return "PENDING"
@@ -138,11 +125,8 @@ class ScoreEngine:
 
         if hit:
             return self._record_hit(prompt_start, prompt_duration)
-
         if timeout:
-            self._record_miss()
-            return "MISS"
-
+            return self._record_miss()
         return "PENDING"
 
     # ── Internal helpers ──────────────────────────────────────────────────────
@@ -151,18 +135,16 @@ class ScoreEngine:
         elapsed    = time.monotonic() - prompt_start
         time_bonus = self._calc_time_bonus(elapsed, prompt_duration)
         self.gs.register_hit(self.base_hit_pts + time_bonus)
+        logger.debug("HIT  +%d pts  (time_bonus=%d)", self.base_hit_pts + time_bonus, time_bonus)
         return "HIT"
 
     def _record_miss(self) -> str:
-        mode_cfg    = self._boss_cfg if self.gs.mode.name == "BOSS" else self._reflex_cfg
-        penalty_pts = int(mode_cfg.get("miss_penalty_pts", 0))
-        self.gs.register_miss(penalty_pts)
+        self.gs.register_miss(penalty_pts=self.miss_penalty)
+        logger.debug("MISS  -%d pts", self.miss_penalty)
         return "MISS"
 
-    def _record_fake(self, prompt_start: float, prompt_duration: float) -> str:
-        self.gs.register_fake()
-        return "FAKE"
-
     def _calc_time_bonus(self, elapsed: float, duration: float) -> int:
-        ratio = max(0.0, 1.0 - elapsed / duration)
-        return int(self.time_bonus_max * ratio)
+        if duration <= 0:
+            return 0
+        ratio = 1.0 - (elapsed / duration)
+        return int(self.time_bonus_max * max(0.0, ratio))

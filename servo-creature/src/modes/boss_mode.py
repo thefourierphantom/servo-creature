@@ -35,8 +35,6 @@ class BossMode:
         self._hold_sec   = float(game_cfg.get("ui", {}).get("result_hold_sec", 0.55))
         self._sum_t      = 5.0
         self._recenter_window = float(self._gcfg.get("recenter_window_sec", 2.0))
-        self._arm_delay = float(game_cfg.get("ui", {}).get("prompt_arm_delay_sec", 0.35))
-        self._max_misses = int(game_cfg.get("scoring", {}).get("max_misses", 10))
 
         # Build combined prompt pool (reflex + boss extras)
         pool = (prompt_cfg.get("reflex_prompts", []) +
@@ -111,8 +109,7 @@ class BossMode:
                 self.gs.awaiting_recenter = False
                 self.gs.recenter_timer = 0.0
                 self.gs.status_message = ""
-                self._armed = False
-                self._arming_timer = self._arm_delay
+                self._prompt_start = time.monotonic()
             else:
                 self.gs.recenter_timer = max(0.0, self.gs.recenter_timer - dt)
                 if self.gs.recenter_timer <= 0:
@@ -120,14 +117,6 @@ class BossMode:
                     self._state = _S_RESULT
                     self._state_timer = self._hold_sec
                 return None
-
-        if not self._armed:
-            self._arming_timer = max(0.0, self._arming_timer - dt)
-            self.gs.prompt_timer = self._dur
-            if self._arming_timer <= 0:
-                self._armed = True
-                self._prompt_start = time.monotonic()
-            return None
 
         elapsed   = time.monotonic() - self._prompt_start
         self.gs.prompt_timer = max(0.0, self._dur - elapsed)
@@ -185,8 +174,6 @@ class BossMode:
         self.gs.last_prompt_result= ""
         self.gs.awaiting_recenter = self._prompt_idx > 0
         self.gs.recenter_timer    = self._recenter_window if self.gs.awaiting_recenter else 0.0
-        self._arming_timer        = self._arm_delay
-        self._armed               = False
         self._prompt_start        = time.monotonic()
         self.gs.prompt_timer      = self._dur
         self.gs.prompt_index      = self._prompt_idx + 1
@@ -204,7 +191,6 @@ class BossMode:
         self.gs.is_fake_out    = False
         self.gs.awaiting_recenter = False
         self.gs.recenter_timer = 0.0
-        title = "BOSS FAILED!" if self.gs.misses >= self._max_misses else "BOSS DONE!"
         self.gs.status_message = (
             f"{title}  {self.gs.score:,} pts  "
             f"{self.gs.accuracy:.0f}% acc  "

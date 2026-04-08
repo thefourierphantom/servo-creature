@@ -34,7 +34,6 @@ _KEY_MAP = {
     pygame.K_d:         "debug",
     pygame.K_F1:        "mode_freeplay",
     pygame.K_F2:        "mode_reflex",
-    pygame.K_F3:        "mode_boss",
     pygame.K_q:         "quit",
 }
 
