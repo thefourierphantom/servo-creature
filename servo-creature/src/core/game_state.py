@@ -62,6 +62,8 @@ class GameState:
         self.threat_level: int   = 0   # 0–5
         self.calibrated:   bool  = False
         self.status_message: str = ""
+        self.awaiting_recenter: bool = False
+        self.recenter_timer:    float = 0.0
 
         # ── Boss flags ────────────────────────────────────────────────────
         self.axis_inverted: bool = False
@@ -113,6 +115,8 @@ class GameState:
         self.score_delta_timer = 0.0
         self.axis_inverted     = False
         self.is_fake_out       = False
+        self.awaiting_recenter = False
+        self.recenter_timer    = 0.0
         self.session_active    = True
 
     # ── Scoring ───────────────────────────────────────────────────────────────
@@ -181,6 +185,8 @@ class GameState:
             "last_result":    self.last_prompt_result,
             "axis_inverted":  self.axis_inverted,
             "is_fake_out":    self.is_fake_out,
+            "awaiting_recenter": self.awaiting_recenter,
+            "recenter_timer": self.recenter_timer,
             "session_active": self.session_active,
             "debug_mode":     self.debug_mode,
         }

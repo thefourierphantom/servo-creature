@@ -34,6 +34,9 @@ class BossMode:
         self._inv_p      = float(self._gcfg.get("inversion_chance",     0.25))
         self._hold_sec   = float(game_cfg.get("ui", {}).get("result_hold_sec", 0.55))
         self._sum_t      = 5.0
+        self._recenter_window = float(self._gcfg.get("recenter_window_sec", 2.0))
+        self._arm_delay = float(game_cfg.get("ui", {}).get("prompt_arm_delay_sec", 0.35))
+        self._max_misses = int(game_cfg.get("scoring", {}).get("max_misses", 10))
 
         # Build combined prompt pool (reflex + boss extras)
         pool = (prompt_cfg.get("reflex_prompts", []) +
@@ -47,15 +50,17 @@ class BossMode:
         self._prompt_idx  = 0
         self._prompt_start= 0.0
         self._state_timer = 0.0
+        self._arming_timer = 0.0
+        self._armed = False
 
     def _build(self, lst):
-    pool = []
-    for p in lst:
-        if p.get("id") == "shake":
-            continue
-        for _ in range(int(p.get("weight", 1))):
-            pool.append(p)
-    return pool or [{"id": "left", "display": "← LEFT", "axis": "roll", "target": -1}]
+        pool = []
+        for p in lst:
+            if p.get("id") == "shake":
+                continue
+            for _ in range(int(p.get("weight", 1))):
+                pool.append(p)
+        return pool or [{"id": "left", "display": "← LEFT", "axis": "roll", "target": -1}]
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -75,6 +80,8 @@ class BossMode:
         self.gs.session_active = False
         self.gs.axis_inverted  = False
         self.gs.is_fake_out    = False
+        self.gs.awaiting_recenter = False
+        self.gs.recenter_timer = 0.0
 
     # ── Update ────────────────────────────────────────────────────────────────
 
@@ -86,7 +93,7 @@ class BossMode:
                 return GameMode.ATTRACT
 
         if self._state == _S_SHOWING:
-            return self._do_showing(tilt)
+            return self._do_showing(dt, tilt)
         if self._state == _S_RESULT:
             return self._do_result(dt)
         if self._state == _S_SUMMARY:
@@ -95,7 +102,33 @@ class BossMode:
 
     # ── States ────────────────────────────────────────────────────────────────
 
-    def _do_showing(self, tilt) -> GameMode | None:
+    def _do_showing(self, dt: float, tilt) -> GameMode | None:
+        if self.gs.awaiting_recenter:
+            remain = max(0.0, self.gs.recenter_timer)
+            self.gs.status_message = f"RECENTER TO ARM PROMPT ({remain:.1f}s)"
+            self.gs.prompt_timer = self._dur
+            if self._se.is_centered(tilt):
+                self.gs.awaiting_recenter = False
+                self.gs.recenter_timer = 0.0
+                self.gs.status_message = ""
+                self._armed = False
+                self._arming_timer = self._arm_delay
+            else:
+                self.gs.recenter_timer = max(0.0, self.gs.recenter_timer - dt)
+                if self.gs.recenter_timer <= 0:
+                    self._se.register_recenter_timeout()
+                    self._state = _S_RESULT
+                    self._state_timer = self._hold_sec
+                return None
+
+        if not self._armed:
+            self._arming_timer = max(0.0, self._arming_timer - dt)
+            self.gs.prompt_timer = self._dur
+            if self._arming_timer <= 0:
+                self._armed = True
+                self._prompt_start = time.monotonic()
+            return None
+
         elapsed   = time.monotonic() - self._prompt_start
         self.gs.prompt_timer = max(0.0, self._dur - elapsed)
 
@@ -119,7 +152,7 @@ class BossMode:
         self._state_timer -= dt
         if self._state_timer <= 0:
             self._prompt_idx += 1
-            if self._prompt_idx >= self._count:
+            if self.gs.misses >= self._max_misses or self._prompt_idx >= self._count:
                 self._to_summary()
             else:
                 self._state = _S_SHOWING
@@ -150,6 +183,10 @@ class BossMode:
         self.gs.axis_inverted     = is_inv
         self.gs.is_fake_out       = is_fake
         self.gs.last_prompt_result= ""
+        self.gs.awaiting_recenter = self._prompt_idx > 0
+        self.gs.recenter_timer    = self._recenter_window if self.gs.awaiting_recenter else 0.0
+        self._arming_timer        = self._arm_delay
+        self._armed               = False
         self._prompt_start        = time.monotonic()
         self.gs.prompt_timer      = self._dur
         self.gs.prompt_index      = self._prompt_idx + 1
@@ -165,8 +202,11 @@ class BossMode:
         self.gs.session_active = False
         self.gs.axis_inverted  = False
         self.gs.is_fake_out    = False
+        self.gs.awaiting_recenter = False
+        self.gs.recenter_timer = 0.0
+        title = "BOSS FAILED!" if self.gs.misses >= self._max_misses else "BOSS DONE!"
         self.gs.status_message = (
-            f"BOSS DONE!  {self.gs.score:,} pts  "
+            f"{title}  {self.gs.score:,} pts  "
             f"{self.gs.accuracy:.0f}% acc  "
             f"best combo ×{self.gs.max_combo}"
         )

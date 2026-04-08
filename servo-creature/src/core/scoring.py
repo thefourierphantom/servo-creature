@@ -41,12 +41,28 @@ class ScoreEngine:
         return float(self._tilt_cfg.get("shake_accel_threshold", 2.5))
 
     @property
+    def recenter_deadzone(self) -> float:
+        cfg_val = self._tilt_cfg.get("recenter_deadzone_deg")
+        if cfg_val is not None:
+            return float(cfg_val)
+        return max(8.0, self.deadzone * 2.0)
+
+    @property
     def base_hit_pts(self) -> int:
         return int(self._score_cfg.get("base_hit_pts", 100))
 
     @property
     def time_bonus_max(self) -> int:
         return int(self._reflex_cfg.get("time_bonus_max_pts", 50))
+
+    def is_centered(self, tilt: dict) -> bool:
+        roll = abs(tilt.get("roll", 0.0))
+        pitch = abs(tilt.get("pitch", 0.0))
+        return roll <= self.recenter_deadzone and pitch <= self.recenter_deadzone
+
+    def register_recenter_timeout(self) -> str:
+        logger.debug("Recenter timeout → MISS")
+        return self._record_miss()
 
     # ── Core evaluation ───────────────────────────────────────────────────────
 
@@ -85,8 +101,6 @@ class ScoreEngine:
             abs(pitch) > self.threshold or
             amag       > self.shake_threshold
         )
-        player_still = (abs(roll) < self.deadzone and abs(pitch) < self.deadzone)
-
         pid = prompt_id.lower()
 
         if is_fake_out:
@@ -111,8 +125,9 @@ class ScoreEngine:
         elif pid in ("full_tilt",):
             hit = abs(roll) >= self.threshold or abs(pitch) >= self.threshold
         elif pid in ("hold", "freeze"):
-            # Must hold still for the full duration
-            if player_moved:
+            # Must hold still for the full duration.
+            # Ignore accel spikes here to avoid vibration-induced false misses.
+            if abs(roll) > self.deadzone or abs(pitch) > self.deadzone:
                 self._record_miss()
                 return "MISS"
             if timeout:

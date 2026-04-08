@@ -29,16 +29,19 @@ freeplay:
 easy:
   prompt_duration_sec: 5.0
   prompt_count: 8
+  recenter_window_sec: 2.8
 
 reflex:
   prompt_duration_sec: 2.2
   prompt_count: 12
+  recenter_window_sec: 2.0
   miss_penalty_pts: 0
   time_bonus_max_pts: 40
 
 boss:
   prompt_duration_sec: 1.45
   prompt_count: 14
+  recenter_window_sec: 2.0
   fake_chance: 0.15
   inversion_chance: 0.15
   miss_penalty_pts: 20
@@ -47,8 +50,10 @@ scoring:
   base_hit_pts: 100
   combo_mult_step: 0.5
   combo_mult_cap: 4.0
+  max_misses: 10
 
 ui:
+  prompt_arm_delay_sec: 0.35
   flash_hit_sec: 0.12
   flash_miss_sec: 0.16
   result_hold_sec: 0.34
