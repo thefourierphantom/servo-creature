@@ -48,6 +48,8 @@ class BossMode:
         self._prompt_idx  = 0
         self._prompt_start= 0.0
         self._state_timer = 0.0
+        self._arming_timer = 0.0
+        self._armed = False
 
     def _build(self, lst):
         pool = []
@@ -139,7 +141,7 @@ class BossMode:
         self._state_timer -= dt
         if self._state_timer <= 0:
             self._prompt_idx += 1
-            if self._prompt_idx >= self._count:
+            if self.gs.misses >= self._max_misses or self._prompt_idx >= self._count:
                 self._to_summary()
             else:
                 self._state = _S_SHOWING
@@ -190,7 +192,7 @@ class BossMode:
         self.gs.awaiting_recenter = False
         self.gs.recenter_timer = 0.0
         self.gs.status_message = (
-            f"BOSS DONE!  {self.gs.score:,} pts  "
+            f"{title}  {self.gs.score:,} pts  "
             f"{self.gs.accuracy:.0f}% acc  "
             f"best combo ×{self.gs.max_combo}"
         )

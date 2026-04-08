@@ -54,6 +54,8 @@ class ReflexMode:
         self._prompt_start = 0.0
         self._cur_prompt: dict | None = None
         self._state_timer  = 0.0
+        self._arming_timer = 0.0
+        self._armed = False
 
     # ── Prompt pool ───────────────────────────────────────────────────────────
 

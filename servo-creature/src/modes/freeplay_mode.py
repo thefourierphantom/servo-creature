@@ -31,6 +31,8 @@ class FreeplayMode:
         self._cur_prompt = None
         self._prompt_idx = 0
         self._state_timer = 0.0
+        self._arming_timer = 0.0
+        self._armed = False
 
     def _build_pool(self, lst: list) -> list:
         allowed = {"left", "right", "up", "down", "hold", "freeze"}
@@ -116,7 +118,7 @@ class FreeplayMode:
         self._state_timer -= dt
         if self._state_timer <= 0:
             self._prompt_idx += 1
-            if self._prompt_idx >= self._count:
+            if self.gs.misses >= self._max_misses or self._prompt_idx >= self._count:
                 self._to_summary()
             else:
                 self._state = _S_SHOWING
