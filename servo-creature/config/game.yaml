@@ -1,0 +1,60 @@
+# ============================================================
+# game.yaml — NSBE Tilt Arena
+# ============================================================
+
+fps: 25
+
+display:
+  width: 1280
+  height: 720
+  fullscreen: false
+
+mpu_poll_hz: 35
+
+debug_overlay: false
+show_fps: false
+
+theme:
+  brand: "NSBE"
+  title: "NSBE Tilt Arena"
+  accent: gold
+
+attract:
+  idle_timeout_sec: 45
+
+freeplay:
+  idle_timeout_sec: 30
+
+reflex:
+  # Speed curve: duration = max(dur_floor, dur_start * dur_rate ^ prompt_n)
+  # n=0: 3.0s  n=20: 2.2s  n=40: 1.6s  n=60: 1.2s  n=90+: ~0.85s floor
+  dur_start: 3.0
+  dur_floor: 0.85
+  dur_rate: 0.985          # multiplied per prompt (gentle exponential decay)
+
+  # Death: game over after this many total misses
+  max_misses: 10
+
+  # Arm delay: prompt is NOT evaluated for this many seconds after appearing.
+  # Prevents carry-over tilt from the previous prompt causing a false miss.
+  eval_delay_sec: 0.35
+
+  miss_penalty_pts: 0      # score penalty per miss (0 = miss-count death only)
+  time_bonus_max_pts: 40
+  recenter_window_sec: 2.0
+
+scoring:
+  base_hit_pts: 100
+  combo_mult_step: 0.5
+  combo_mult_cap: 4.0
+
+ui:
+  flash_hit_sec: 0.12
+  flash_miss_sec: 0.16
+  result_hold_sec: 0.34
+  score_popup_sec: 0.55
+  threat_bar_max: 5
+
+calibration:
+  hold_sec: 0.35
+  return_delay_sec: 1.0

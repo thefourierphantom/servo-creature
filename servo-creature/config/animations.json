@@ -1,0 +1,27 @@
+{
+  "celebrate": [
+    {"t": 0.00, "head_yaw": 90, "head_pitch": 90, "left_arm": 90, "right_arm": 90},
+    {"t": 0.20, "left_arm": 110, "right_arm": 70},
+    {"t": 0.40, "left_arm": 75, "right_arm": 105},
+    {"t": 0.60, "left_arm": 110, "right_arm": 70},
+    {"t": 0.80, "left_arm": 90, "right_arm": 90}
+  ],
+  "sad": [
+    {"t": 0.00, "head_pitch": 90, "tail": 90},
+    {"t": 0.40, "head_pitch": 105, "tail": 82},
+    {"t": 0.80, "head_pitch": 100, "tail": 86}
+  ],
+  "scan": [
+    {"t": 0.00, "head_yaw": 90},
+    {"t": 0.30, "head_yaw": 75},
+    {"t": 0.60, "head_yaw": 105},
+    {"t": 0.90, "head_yaw": 90}
+  ],
+  "wave": [
+    {"t": 0.00, "right_arm": 90},
+    {"t": 0.20, "right_arm": 70},
+    {"t": 0.40, "right_arm": 105},
+    {"t": 0.60, "right_arm": 70},
+    {"t": 0.80, "right_arm": 90}
+  ]
+}

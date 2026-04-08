@@ -1,0 +1,60 @@
+# ============================================================
+# hardware.yaml — NSBE Tilt Arena
+# ============================================================
+
+mock_mode: false
+
+mpu6050:
+  i2c_bus: 1
+  address: 0x68
+
+  calibration_samples: 90
+
+  smoothing_alpha: 0.35
+
+  # Observed behavior before fix:
+  # left -> down, right -> up, up -> right, down -> left
+  swap_axes: false
+  invert_x: false
+  invert_y: true
+
+  sensitivity: 1.10
+
+  deadzone_deg: 3.0
+  threshold_deg: 16.0
+  shake_g: 2.1
+
+oled:
+  enabled: false
+  i2c_bus: 1
+  address: 0x3C
+  width: 128
+  height: 64
+
+dot_matrix:
+  enabled: false
+  cascaded: 1
+  spi_port: 0
+  spi_device: 0
+  brightness: 4
+
+pir:
+  enabled: false
+  pin: 17
+
+ultrasonic:
+  enabled: false
+  trigger_pin: 23
+  echo_pin: 24
+  hazard_distance_cm: 30.0
+
+laser:
+  enabled: false
+  pin: 25
+
+controller:
+  enabled: false
+  btn_start: 7
+  btn_select: 6
+  btn_a: 0
+  btn_b: 1

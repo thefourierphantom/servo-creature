@@ -1,0 +1,26 @@
+# ============================================================
+# requirements.txt — Tilt Trial Arena / Mission Breach
+#
+# Core (required on all platforms):
+#   pygame, pyyaml
+#
+# Pi hardware (only needed on Raspberry Pi):
+#   smbus2         — MPU6050 I2C driver
+#   RPi.GPIO       — PIR, ultrasonic, laser GPIO
+#   luma.oled      — SSD1306 OLED display
+#   luma.led_matrix— MAX7219 dot-matrix display
+#   Pillow         — image drawing for OLED / dot-matrix
+#
+# On a laptop (mock mode) you only need: pygame pyyaml
+# ============================================================
+
+# ── Always required ────────────────────────────────────────
+pygame>=2.5.0
+PyYAML>=6.0
+
+# ── Pi hardware (install with: pip install -r requirements.txt) ─
+smbus2>=0.4.2
+RPi.GPIO>=0.7.1
+luma.oled>=3.13.0
+luma.led_matrix>=1.7.0
+Pillow>=10.0.0
