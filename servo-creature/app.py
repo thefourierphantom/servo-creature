@@ -6,7 +6,7 @@ Core build: MPU6050 wand + HDMI monitor + keyboard.
 No other hardware is required.
 
 Keyboard:
-  ENTER / Space → Start / confirm
+  ENTER / Space → Testing Ground / confirm
   ESC           → Back to attract
   F2            → Reflex mode
   F3            → Boss mode

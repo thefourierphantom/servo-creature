@@ -228,6 +228,8 @@ class DashboardDisplay:
             pygame.draw.line(s, C_GRID, (x, 0), (x, self._H))
         for y in range(0, self._H, 80):
             pygame.draw.line(s, C_GRID, (0, y), (self._W, y))
+        for x in range(40, self._W, 160):
+            pygame.draw.line(s, (10, 25, 48), (x, 0), (x + 90, self._H), 1)
 
         # Top bar background
         pygame.draw.rect(s, C_PANEL, (0, 0, self._W, self._TOP_H))
@@ -243,7 +245,7 @@ class DashboardDisplay:
         s.blit(tag_surf, (10 + (tag_w - tag_surf.get_width()) // 2, 10 + (52 - tag_surf.get_height()) // 2))
 
         # Title
-        title = self._f_md.render("NSBE RADAR CHASER", True, C_GOLD)
+        title = self._f_md.render("NSBE // RADAR COMMAND", True, C_GOLD)
         s.blit(title, (self._W // 2 - title.get_width() // 2, self._TOP_H // 2 - title.get_height() // 2))
 
         # Bottom bar background
@@ -252,7 +254,7 @@ class DashboardDisplay:
 
         # Bottom: keyboard hint
         hints = (
-            "[ENTER] Start   [F2] Reflex   [F3] Boss   "
+            "[ENTER] Testing Ground   [F2] Reflex   [F3] Boss   "
             "[R] Recalibrate   [D] Debug   [Q] Quit"
         )
         hint_surf = self._f_xs.render(hints, True, C_DIM)
@@ -268,8 +270,12 @@ class DashboardDisplay:
         # Static labels in top bar
         score_lbl = self._f_xs.render("SCORE", True, C_DIM)
         combo_lbl = self._f_xs.render("COMBO", True, C_DIM)
-        s.blit(score_lbl, (216, 10))
-        s.blit(combo_lbl, (216, 38))
+        mult_lbl  = self._f_xs.render("MULT", True, C_DIM)
+        s.blit(score_lbl, (220, 8))
+        s.blit(combo_lbl, (450, 8))
+        s.blit(mult_lbl, (620, 8))
+        pygame.draw.line(s, C_BORDER, (430, 10), (430, 62), 1)
+        pygame.draw.line(s, C_BORDER, (600, 10), (600, 62), 1)
 
         self._bg_surf = s
 
@@ -278,16 +284,16 @@ class DashboardDisplay:
     def _draw_top_dynamic(self, gs) -> None:
         scr = self._screen
         # Score
-        scr.blit(self._c_score.get(f"{gs.score:,}"), (280, 8))
+        scr.blit(self._c_score.get(f"{gs.score:,}"), (220, 16))
         # Combo
         combo_col = C_GOLD if gs.combo > 3 else C_WHITE
         self._c_combo.set_color(combo_col)
-        scr.blit(self._c_combo.get(f"×{gs.combo}"), (280, 36))
+        scr.blit(self._c_combo.get(f"×{gs.combo}"), (450, 20))
         # Multiplier sub-text
-        scr.blit(self._c_mult.get(f"({gs.combo_multiplier:.1f}×)"), (380, 46))
+        scr.blit(self._c_mult.get(f"{gs.combo_multiplier:.1f}×"), (628, 24))
 
         # Threat bar (right of top bar)
-        tx = self._W - 260
+        tx = self._W - 270
         threat_lbl = self._f_xs.render("THREAT", True, C_DIM)
         scr.blit(threat_lbl, (tx, 10))
         cell_w = 34
@@ -305,36 +311,54 @@ class DashboardDisplay:
 
         pulse = int(200 + 55 * math.sin(self._t * 1.8))
 
-        # Big title
-        t1 = self._f_prompt.render("NSBE", True, C_GOLD)
-t2 = self._f_prompt.render("RADAR CHASER", True, C_WHITE)
-self._screen.blit(t1, (cx - t1.get_width() // 2, cy - 200))
-self._screen.blit(t2, (cx - t2.get_width() // 2, cy - 90))
+        # Space-glow ambience (hero style)
+        for r, alpha in ((380, 18), (300, 28), (220, 38)):
+            halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            pygame.draw.circle(halo, (55, 120, 255, alpha), (r, r), r)
+            self._screen.blit(halo, (120 - r, cy - r + 20))
+        for sx, sy in ((180, 120), (350, 280), (900, 120), (1060, 520), (760, 600)):
+            pygame.draw.line(self._screen, (210, 220, 255), (sx - 12, sy), (sx + 12, sy), 1)
+            pygame.draw.line(self._screen, (210, 220, 255), (sx, sy - 12), (sx, sy + 12), 1)
 
-sub = self._f_md.render("Lock in. Read the motion. Chase the score.", True, C_GREY)
-self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
+        # Left hero orb / bot stand-in
+        pygame.draw.circle(self._screen, (80, 165, 255), (220, cy + 40), 170)
+        pygame.draw.circle(self._screen, (215, 235, 255), (220, cy + 40), 170, 4)
+        pygame.draw.circle(self._screen, (30, 70, 150), (220, cy + 40), 120)
+        pygame.draw.circle(self._screen, (120, 210, 255), (165, cy - 10), 26)
+        pygame.draw.circle(self._screen, C_WHITE, (165, cy - 10), 26, 2)
+
+        # Main title block (right aligned, poster-style)
+        t0 = self._f_md.render("nsbe-radar.local // mission feed", True, C_BLUE)
+        t1 = self._f_prompt.render("FUTURE", True, C_WHITE)
+        t2 = self._f_prompt.render("TILT TECH", True, C_WHITE)
+        self._screen.blit(t0, (cx + 130, cy - 250))
+        self._screen.blit(t1, (cx + 120, cy - 170))
+        self._screen.blit(t2, (cx + 120, cy - 60))
+
+        sub = self._f_md.render("Lock in. Read motion. Own the arena.", True, C_GREY)
+        self._screen.blit(sub, (cx + 120, cy + 40))
 
         # Blinking start prompt
         if int(self._t * 2) % 2 == 0:
-            start = self._f_lg.render("► Press ENTER to start ◄", True, C_ORANGE)
-            self._screen.blit(start, (cx - start.get_width() // 2, cy + 88))
+            start = self._f_lg.render("► ENTER: TESTING GROUND ◄", True, C_ORANGE)
+            self._screen.blit(start, (cx + 120, cy + 100))
 
         # Mode shortcuts
         shortcuts = [
-            ("[F2] REFLEX MODE  — 15 timed prompts",   C_ORANGE),
-            ("[F3] BOSS MODE    — 20 prompts + fakes",  C_RED),
-            ("[ENTER] EASY MODE — 5 seconds per prompt", C_TEAL),
+            ("[ENTER] TESTING GROUND — training & calibration feel", C_TEAL),
+            ("[F2] REFLEX MODE       — timed challenge",   C_ORANGE),
+            ("[F3] BOSS MODE         — fakes + inversion",  C_RED),
         ]
         for i, (txt, col) in enumerate(shortcuts):
             s = self._f_sm.render(txt, True, col)
-            self._screen.blit(s, (cx - s.get_width() // 2, cy + 160 + i * 32))
+            self._screen.blit(s, (cx + 120, cy + 170 + i * 30))
 
         
 
     def _draw_controls_box(self, x: int, y: int) -> None:
         """Small keyboard reference card."""
         items = [
-            ("ENTER",   "Start / confirm"),
+            ("ENTER",   "Testing ground"),
             ("ESC",     "Back to attract"),
             ("F2",      "Reflex mode"),
             ("F3",      "Boss mode"),
@@ -362,7 +386,7 @@ self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
         cx = self._CX + self._CW // 2
         cy = self._MID_Y + self._MID_H // 2
 
-        hdr = self._f_lg.render("FREEPLAY", True, C_TEAL)
+        hdr = self._f_lg.render("TESTING GROUND", True, C_TEAL)
         self._screen.blit(hdr, (cx - hdr.get_width() // 2, cy - 100))
 
         roll  = gs.tilt.get("roll", 0.0)
@@ -372,7 +396,7 @@ self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
         self._screen.blit(rv, (cx - rv.get_width() // 2, cy - 30))
         self._screen.blit(pv, (cx - pv.get_width() // 2, cy + 14))
 
-        tip = self._f_sm.render("Press F2 or ENTER for Reflex →", True, C_DIM)
+        tip = self._f_sm.render("Press F2 for Reflex challenge or F3 for Boss", True, C_DIM)
         self._screen.blit(tip, (cx - tip.get_width() // 2, cy + 80))
 
     # ── Game screen (Reflex + Boss) ───────────────────────────────────────────
@@ -480,10 +504,24 @@ self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
         pcol = PROMPT_COLOR.get(key, PROMPT_COLOR["DEFAULT"])
         self._c_prompt.set_color(pcol)
 
+        # Recenter lock
+        if gs.awaiting_recenter:
+            lock = self._f_sm.render("RE-CENTER TO ARM SCORING", True, C_YELLOW)
+            self._screen.blit(lock, (cx - lock.get_width() // 2, self._MID_Y + 14))
+            wait_total = 2.8 if mode == "FREEPLAY" else 2.0
+            ratio = max(0.0, min(1.0, gs.recenter_timer / wait_total))
+            bar_y = self._MID_Y + 42
+            bar_w = self._CW - 180
+            bar_x = self._CX + 90
+            pygame.draw.rect(self._screen, C_PANEL2, (bar_x, bar_y, bar_w, 10), border_radius=5)
+            if ratio > 0:
+                pygame.draw.rect(self._screen, C_YELLOW, (bar_x, bar_y, int(bar_w * ratio), 10), border_radius=5)
+            pygame.draw.rect(self._screen, C_BORDER, (bar_x, bar_y, bar_w, 10), width=1, border_radius=5)
+
         # Fake-out flag
         if gs.is_fake_out:
             ftag = self._f_sm.render("FAKE-OUT — FREEZE!", True, C_ORANGE)
-            self._screen.blit(ftag, (cx - ftag.get_width() // 2, self._MID_Y + 14))
+            self._screen.blit(ftag, (cx - ftag.get_width() // 2, self._MID_Y + 58))
 
         # Big prompt text
         ps = self._c_prompt.get(gs.prompt)
