@@ -49,13 +49,13 @@ class BossMode:
         self._state_timer = 0.0
 
     def _build(self, lst):
-    pool = []
-    for p in lst:
-        if p.get("id") == "shake":
-            continue
-        for _ in range(int(p.get("weight", 1))):
-            pool.append(p)
-    return pool or [{"id": "left", "display": "← LEFT", "axis": "roll", "target": -1}]
+        pool = []
+        for p in lst:
+            if p.get("id") == "shake":
+                continue
+            for _ in range(int(p.get("weight", 1))):
+                pool.append(p)
+        return pool or [{"id": "left", "display": "← LEFT", "axis": "roll", "target": -1}]
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 

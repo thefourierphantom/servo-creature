@@ -41,15 +41,15 @@ class ReflexMode:
     # ── Pool ──────────────────────────────────────────────────────────────────
 
     def _build_pool(self, lst: list) -> list:
-    pool = []
-    for p in lst:
-        if p.get("id") == "shake":
-            continue
-        for _ in range(int(p.get("weight", 1))):
-            pool.append(p)
-    if not pool:
-        pool = [{"id": "hold", "display": "◉ HOLD", "axis": "none", "target": 0}]
-    return pool
+        pool = []
+        for p in lst:
+            if p.get("id") == "shake":
+                continue
+            for _ in range(int(p.get("weight", 1))):
+                pool.append(p)
+        if not pool:
+            pool = [{"id": "hold", "display": "◉ HOLD", "axis": "none", "target": 0}]
+        return pool
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
