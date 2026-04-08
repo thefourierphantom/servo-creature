@@ -309,8 +309,6 @@ class DashboardDisplay:
         cx = self._W // 2
         cy = self._H // 2
 
-        pulse = int(200 + 55 * math.sin(self._t * 1.8))
-
         # Space-glow ambience (hero style)
         for r, alpha in ((380, 18), (300, 28), (220, 38)):
             halo = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
