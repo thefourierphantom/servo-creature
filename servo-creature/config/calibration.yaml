@@ -1,0 +1,11 @@
+accel_offset:
+  x: 0.01
+  y: 0.02
+  z: 0.0
+calibrated: true
+gyro_offset:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+pitch_offset: 0.0
+roll_offset: 0.0

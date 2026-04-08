@@ -1,0 +1,22 @@
+{
+  "default_mode": "puppet",
+  "modes": {
+    "puppet": {
+      "name": "Puppet Mode",
+      "description": "Direct tilt control of the creature.",
+      "score_enabled": false
+    },
+    "challenge": {
+      "name": "Challenge Mode",
+      "description": "Match target tilts for points.",
+      "score_enabled": true,
+      "round_time_sec": 30
+    },
+    "boss": {
+      "name": "Boss Mode",
+      "description": "Creature pushes back and surprises the player.",
+      "score_enabled": true,
+      "difficulty": 2
+    }
+  }
+}

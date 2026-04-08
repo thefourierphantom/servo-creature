@@ -1,0 +1,13 @@
+{
+  "challenge": {
+    "hit_window_deg": 8,
+    "points_per_hit": 10,
+    "streak_bonus": 5
+  },
+  "boss": {
+    "hit_window_deg": 6,
+    "points_per_hit": 15,
+    "streak_bonus": 10,
+    "penalty_on_miss": 5
+  }
+}
