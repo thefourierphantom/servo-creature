@@ -307,12 +307,12 @@ class DashboardDisplay:
 
         # Big title
         t1 = self._f_prompt.render("NSBE", True, C_GOLD)
-t2 = self._f_prompt.render("RADAR CHASER", True, C_WHITE)
-self._screen.blit(t1, (cx - t1.get_width() // 2, cy - 200))
-self._screen.blit(t2, (cx - t2.get_width() // 2, cy - 90))
+        t2 = self._f_prompt.render("RADAR CHASER", True, C_WHITE)
+        self._screen.blit(t1, (cx - t1.get_width() // 2, cy - 200))
+        self._screen.blit(t2, (cx - t2.get_width() // 2, cy - 90))
 
-sub = self._f_md.render("Lock in. Read the motion. Chase the score.", True, C_GREY)
-self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
+        sub = self._f_md.render("Lock in. Read the motion. Chase the score.", True, C_GREY)
+        self._screen.blit(sub, (cx - sub.get_width() // 2, cy + 30))
 
         # Blinking start prompt
         if int(self._t * 2) % 2 == 0:
