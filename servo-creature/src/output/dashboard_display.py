@@ -333,7 +333,7 @@ class DashboardDisplay:
         ]
         for i, (txt, col) in enumerate(shortcuts):
             s = self._f_sm.render(txt, True, col)
-            self._screen.blit(s, (cx - s.get_width() // 2, cy + 160 + i * 32))
+            self._screen.blit(s, (cx + 120, cy + 170 + i * 30))
 
         
 
